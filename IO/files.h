@@ -1,18 +1,11 @@
 
 #include <sys/stat.h>
-#define NULL (void *)0
-struct _IO_FILE *stderr;
-#define stderr stderr
-typedef unsigned long size_t;
-size_t strlen(const char *);
-typedef struct _IO_FILE FILE;
-FILE *fopen(const char *__restrict__, const char *__restrict__);
-int fclose(FILE *);
-size_t fread(void *__restrict__, size_t, size_t, FILE *__restrict__);
-size_t fwrite(const void *__restrict__, size_t, size_t, FILE *__restrict__);
-int fprintf(FILE *__restrict__, const char *__restrict__, ...);
-
-void *malloc(size_t);
+#include "files_include.h"
+#ifdef _WIN32
+#define FILE_SEPARATOR '\\'
+#else
+#define FILE_SEPARATOR '/'
+#endif
 
 int length_of_file(const char *path)
 {
@@ -70,7 +63,7 @@ void read_structure_from_file(const char *path, void *variable)
     }
     // Allocates buffer with size LENGTH+1 to add terminator at the end.
     fread(variable, sizeof(variable), 1, file);
-    // Close stream.
+    // Close stream.     access(const char *path, int amode);
     fclose(file);
 }
 
@@ -86,6 +79,33 @@ void write_structure_to_file(const char *path, const void *to_write)
     }
     // Write to file.
     fwrite(to_write, sizeof(to_write), 1, file);
+    // Close stream.
+    fclose(file);
+}
+
+void process_file(void(process)(char *), const char *path, size_t buffer_size)
+{
+    // Open file.
+    FILE *file = fopen(path, "rb");
+    // If can't open file.
+    if (!file)
+    {
+        fprintf(stderr, "Can't open file %s.", path);
+        return;
+    }
+    // Allocate memory for buffer plus one, beacuse of terminator.
+    char *buffer = malloc(buffer_size + 1);
+    // Length of readed bytes.
+    size_t len;
+    // Process file.
+    while ((len = fread(buffer, buffer_size, 1, file)) != 0)
+    {
+        //Add terminator
+        buffer[len] = 0;
+        process(buffer);
+    }
+    // Free memory.
+    free(buffer);
     // Close stream.
     fclose(file);
 }
