@@ -1,6 +1,9 @@
 
 #include <sys/stat.h>
-#include "files_include.h"
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #ifdef _WIN32
 #define FILE_SEPARATOR '\\'
 #else
@@ -13,6 +16,8 @@ int length_of_file(const char *path)
     stat(path, &st);
     return st.st_size;
 }
+
+
 
 char *read_file(const char *path)
 {
@@ -108,4 +113,15 @@ void process_file(void(process)(char *), const char *path, size_t buffer_size)
     free(buffer);
     // Close stream.
     fclose(file);
+}
+
+bool is_absolute(const char *path)
+{
+    if (strlen(path) < 2)
+        return false;
+#ifdef _WIN32
+    return path[1] == ':';
+#else
+    return path[0] == '/';
+#endif
 }
